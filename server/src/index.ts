@@ -12,12 +12,12 @@ const port = 3000;
 
 // CORS Configuration
 app.use(
-  cors({
-    origin: "*",
-    allowedHeaders: ["Content-Type", "mcp-session-id", "mcp-protocol-version"],
-    exposedHeaders: ["mcp-session-id"],
-    credentials: true,
-  })
+	cors({
+		origin: "*",
+		allowedHeaders: ["Content-Type", "mcp-session-id", "mcp-protocol-version"],
+		exposedHeaders: ["mcp-session-id"],
+		credentials: true,
+	})
 );
 
 app.use(express.json());
@@ -27,10 +27,9 @@ const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
 // In-memory todo storage (shared across sessions)
 const todos: Array<{
-  id: number;
-  text: string;
-  completed: boolean;
-  createdAt: number;
+	id: number;
+	name: string;
+	createdAt: number;
 }> = [];
 let todoIdCounter = 1;
 
@@ -38,7 +37,7 @@ let todoIdCounter = 1;
  * Generate interactive HTML for Todo List with embedded JavaScript
  */
 function generateTodoHTML() {
-  return `
+	return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -126,11 +125,6 @@ function generateTodoHTML() {
           border-color: #667eea;
           box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
           transform: translateY(-2px);
-        }
-        
-        .todo-item.completed {
-          background: #f8f9fa;
-          opacity: 0.8;
         }
         
         .todo-content {
@@ -267,24 +261,11 @@ function generateTodoHTML() {
             <div class="stat-number">${todos.length}</div>
             <div class="stat-label">Total Tasks</div>
           </div>
-          <div class="stat-item">
-            <div class="stat-number">${
-              todos.filter((t) => !t.completed).length
-            }</div>
-            <div class="stat-label">Active</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">${
-              todos.filter((t) => t.completed).length
-            }</div>
-            <div class="stat-label">Completed</div>
-          </div>
         </div>
         
         <div class="todo-list">
-          ${
-            todos.length === 0
-              ? `
+          ${todos.length === 0
+			? `
             <div class="empty-state">
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
@@ -293,24 +274,23 @@ function generateTodoHTML() {
               <p>Create your first todo to get started!</p>
             </div>
           `
-              : todos
-                  .map(
-                    (todo, index) => `
+			: todos
+				.map(
+					(todo, index) => `
             <div class="todo-item" style="animation-delay: ${index * 0.05}s">
               <div id="todo-text-${todo.id}" class="todo-content">
                 <div class="todo-info">
                   <span class="todo-id">#${todo.id}</span>
                 </div>
                 <div id="view-mode-${todo.id}" class="todo-text">${escapeHtml(
-                      todo.text
-                    )}</div>
-                <div id="edit-mode-${
-                  todo.id
-                }" class="todo-content" style="display: none; flex: 1;">
+						todo.name
+					)}</div>
+                <div id="edit-mode-${todo.id
+						}" class="todo-content" style="display: none; flex: 1;">
                     <input 
                         type="text" 
                         id="edit-input-${todo.id}" 
-                        value="${escapeHtml(todo.text)}"
+                        value="${escapeHtml(todo.name)}"
                         class="todo-text"
                         style="width: 100%; padding: 8px; border: 2px solid #667eea; border-radius: 8px; font-size: 16px;"
                     />
@@ -319,29 +299,24 @@ function generateTodoHTML() {
               
               <div class="todo-meta">
                 <div class="todo-actions">
-                    <div id="edit-actions-${
-                      todo.id
-                    }" class="todo-actions" style="display: none;">
-                        <button class="btn btn-toggle" onclick="saveEdit(${
-                          todo.id
-                        })">
+                    <div id="edit-actions-${todo.id
+						}" class="todo-actions" style="display: none;">
+                        <button class="btn btn-toggle" onclick="saveEdit(${todo.id
+						})">
                         ✅ Save
                         </button>
-                        <button class="btn btn-delete" onclick="cancelEdit(${
-                          todo.id
-                        }, '${escapeHtml(todo.text).replace(/'/g, "\\'")}')">
+                        <button class="btn btn-delete" onclick="cancelEdit(${todo.id
+						}, '${escapeHtml(todo.name).replace(/'/g, "\\'")}')">
                         ❌ Cancel
                         </button>
                     </div>
                     <div id="view-actions-${todo.id}" class="todo-actions">
-                    <button class="btn btn-toggle" onclick="startEdit(${
-                      todo.id
-                    }, '${todo.text}')">
+                    <button class="btn btn-toggle" onclick="startEdit(${todo.id
+						}, '${todo.name}')">
                         Edit
                     </button>
-                    <button class="btn btn-delete" onclick="deleteTodo(${
-                      todo.id
-                    })">
+                    <button class="btn btn-delete" onclick="deleteTodo(${todo.id
+						})">
                         🗑️ Delete
                     </button>
                   </div>
@@ -349,9 +324,9 @@ function generateTodoHTML() {
               </div>
             </div>
           `
-                  )
-                  .join("")
-          }
+				)
+				.join("")
+		}
         </div>
       </div>
       
@@ -395,29 +370,16 @@ function generateTodoHTML() {
             window.parent.postMessage({ type, messageId, payload }, '*');
             return messageId;
         }
-
-        // Toggle todo
-        window.toggleTodo = function(id, completed) {
-          sendToParent('TOGGLE_TODO', { id, completed });
-        };
         
         // Update todo
         function saveEdit(id) {
             var input = document.getElementById('edit-input-' + id);
             var newText = input ? input.value.trim() : '';
-            // window.parent.postMessage({
-            //   type: 'prompt',
-            //   payload: { prompt: 'Call todo_update tool with id=' + id + ' and text="' + newText + '"' }
-            // }, '*');
-            sendToParent('tool', { toolName: 'todo_update', id: id, text: newText });
+            sendToParent('prompt', { toolName: 'todo_update', id: id, text: newText, prompt: 'Call todo_update tool with id=' + id + ' and text="' + newText + '"' });
         }
         // Delete todo
         function deleteTodo(id) {
-            // window.parent.postMessage({
-            //   type: 'prompt',
-            //   payload: { prompt: 'Delete #' + id }
-            // }, '*');
-            sendToParent('tool', { toolName: 'todo_delete', id: id });
+            sendToParent('prompt', { toolName: 'todo_delete', id: id, prompt: 'Delete #' + id });
         }
         document.addEventListener('keydown', function(e) {
             if (e.target && e.target.id && e.target.id.startsWith('edit-input-')) {
@@ -430,7 +392,7 @@ function generateTodoHTML() {
                 e.preventDefault();
                 var todo = TODOS_DATA.find(function(t) { return t.id === id; });
                 if (todo) {
-                    cancelEdit(id, todo.text);
+                    cancelEdit(id, todo.name);
                 }
             }
             }
@@ -442,292 +404,291 @@ function generateTodoHTML() {
   `;
 }
 function escapeHtml(text: string): string {
-  const map: { [key: string]: string } = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  };
-  return text.replace(/[&<>"']/g, (m) => map[m]);
+	const map: { [key: string]: string } = {
+		"&": "&amp;",
+		"<": "&lt;",
+		">": "&gt;",
+		'"': "&quot;",
+		"'": "&#039;",
+	};
+	return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
 function formatDate(timestamp: number): string {
-  const date = new Date(timestamp);
-  return date.toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+	const date = new Date(timestamp);
+	return date.toLocaleDateString("vi-VN", {
+		day: "2-digit",
+		month: "2-digit",
+		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
 }
 
 /**
  * Create and configure MCP server with todo tools
  */
 function createMcpServer(): McpServer {
-  const server = new McpServer({
-    name: "minimal-todo-server",
-    version: "1.0.0",
-  });
+	const server = new McpServer({
+		name: "minimal-todo-server",
+		version: "1.0.0",
+	});
 
-  // Tool 1: Create Todo
-  server.tool(
-    "todo_create",
-    "Create a new todo item",
-    {
-      text: z.string().min(1).describe("The todo text/description"),
-    },
-    async ({ text }) => {
-      const newTodo = {
-        id: todoIdCounter++,
-        text: text,
-        completed: false,
-        createdAt: Date.now(),
-      };
-      todos.push(newTodo);
+	// Tool 1: Create Todo
+	server.tool(
+		"todo_create",
+		"Create a new todo item",
+		{
+			text: z.string().min(1).describe("The todo text/description"),
+		},
+		async ({ text }) => {
+			const newTodo = {
+				id: todoIdCounter++,
+				name: text,
+				createdAt: Date.now(),
+			};
+			todos.push(newTodo);
 
-      const html = generateTodoHTML();
-      const resourceBlock = createUIResource({
-        uri: "ui://todo/list",
-        encoding: "text",
-        content: { type: "rawHtml", htmlString: html },
-        metadata: {
-          title: "📝 Todo List",
-          description: "Your updated todo list",
-          preferredRenderContext: "main-panel",
-        },
-      });
+			const html = generateTodoHTML();
+			const resourceBlock = createUIResource({
+				uri: "ui://todo/list",
+				encoding: "text",
+				content: { type: "rawHtml", htmlString: html },
+				metadata: {
+					title: "📝 Todo List",
+					description: "Your updated todo list",
+					preferredRenderContext: "main-panel",
+				},
+			});
 
-      return {
-        content: [resourceBlock],
-      };
-    }
-  );
+			return {
+				content: [resourceBlock],
+			};
+		}
+	);
 
-  // Tool 2: List Todos
-  server.tool("todo_list", "List all todos", {}, async () => {
-    const html = generateTodoHTML();
+	// Tool 2: List Todos
+	server.tool("todo_list", "List all todos", {}, async () => {
+		const html = generateTodoHTML();
 
-    const resourceBlock = createUIResource({
-      uri: "ui://todo/list",
-      content: { type: "rawHtml", htmlString: html },
-      encoding: "text",
-      metadata: {
-        title: "📝 Todo List",
-        description: "All your todos in one place",
-        preferredRenderContext: "main-panel",
-      },
-    });
+		const resourceBlock = createUIResource({
+			uri: "ui://todo/list",
+			content: { type: "rawHtml", htmlString: html },
+			encoding: "text",
+			metadata: {
+				title: "📝 Todo List",
+				description: "All your todos in one place",
+				preferredRenderContext: "main-panel",
+			},
+		});
 
-    return {
-      content: [resourceBlock],
-    };
-  });
+		return {
+			content: [resourceBlock],
+		};
+	});
 
-  // Tool 3: Update Todo
-  server.tool(
-    "todo_update",
-    "Update an existing todo (text and/or completion status)",
-    {
-      id: z.number().describe("The ID of the todo to update"),
-      text: z.string().optional().describe("New text for the todo"),
-    },
-    async ({ id, text }) => {
-      const todo = todos.find((t) => t.id === id);
-      if (!todo) {
-        return {
-          content: [{ type: "text", text: `❌ Todo with ID ${id} not found` }],
-        };
-      }
+	// Tool 3: Update Todo
+	server.tool(
+		"todo_update",
+		"Update an existing todo text by ID or old text",
+		{
+			id: z.number().describe("The ID of the todo to update"),
+			text: z.string().optional().describe("New text for the todo"),
+		},
+		async ({ id, text }) => {
+			const todo = todos.find((t) => t.id === id);
+			if (!todo) {
+				return {
+					content: [{ type: "text", text: `❌ Todo with ID ${id} not found` }],
+				};
+			}
 
-      if (text !== undefined) todo.text = text;
+			if (text !== undefined) todo.name = text;
 
-      const html = generateTodoHTML();
-      const resourceBlock = createUIResource({
-        uri: "ui://todo/list",
-        content: { type: "rawHtml", htmlString: html },
-        encoding: "text",
-        metadata: {
-          title: "📝 Todo List",
-          description: "Updated todo list",
-          preferredRenderContext: "main-panel",
-        },
-      });
+			const html = generateTodoHTML();
+			const resourceBlock = createUIResource({
+				uri: "ui://todo/list",
+				content: { type: "rawHtml", htmlString: html },
+				encoding: "text",
+				metadata: {
+					title: "📝 Todo List",
+					description: "Updated todo list",
+					preferredRenderContext: "main-panel",
+				},
+			});
 
-      return {
-        content: [resourceBlock],
-      };
-    }
-  );
+			return {
+				content: [resourceBlock],
+			};
+		}
+	);
 
-  // Tool 4: Delete Todo
-  server.tool(
-    "todo_delete",
-    "Delete a todo item",
-    {
-      id: z.number().describe("The ID of the todo to delete"),
-    },
-    async ({ id }) => {
-      const index = todos.findIndex((t) => t.id === id);
-      if (index === -1) {
-        return {
-          content: [{ type: "text", text: `❌ Todo with ID ${id} not found` }],
-        };
-      }
+	// Tool 4: Delete Todo
+	server.tool(
+		"todo_delete",
+		"Delete a todo item by ID or text",
+		{
+			id: z.number().describe("The ID of the todo to delete"),
+		},
+		async ({ id }) => {
+			const index = todos.findIndex((t) => t.id === id);
+			if (index === -1) {
+				return {
+					content: [{ type: "text", text: `❌ Todo with ID ${id} not found` }],
+				};
+			}
 
-      todos.splice(index, 1);
+			todos.splice(index, 1);
 
-      const html = generateTodoHTML();
-      const resourceBlock = createUIResource({
-        uri: "ui://todo/list",
-        content: { type: "rawHtml", htmlString: html },
-        encoding: "text",
-        metadata: {
-          title: "📝 Todo List",
-          description: "Updated todo list after deletion",
-          preferredRenderContext: "main-panel",
-        },
-      });
+			const html = generateTodoHTML();
+			const resourceBlock = createUIResource({
+				uri: "ui://todo/list",
+				content: { type: "rawHtml", htmlString: html },
+				encoding: "text",
+				metadata: {
+					title: "📝 Todo List",
+					description: "Updated todo list after deletion",
+					preferredRenderContext: "main-panel",
+				},
+			});
 
-      return {
-        content: [resourceBlock],
-      };
-    }
-  );
+			return {
+				content: [resourceBlock],
+			};
+		}
+	);
 
-  return server;
+	return server;
 }
 
 // Handle POST requests
 app.post("/mcp", async (req, res) => {
-  try {
-    const sessionId = req.headers["mcp-session-id"] as string | undefined;
+	try {
+		const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
-    console.log("📨 POST /mcp");
-    console.log("  Session ID:", sessionId || "NEW");
+		console.log("📨 POST /mcp");
+		console.log("  Session ID:", sessionId || "NEW");
 
-    let transport: StreamableHTTPServerTransport;
+		let transport: StreamableHTTPServerTransport;
 
-    if (sessionId && transports[sessionId]) {
-      console.log("  Using existing transport");
-      transport = transports[sessionId];
-    } else if (!sessionId && isInitializeRequest(req.body)) {
-      console.log("  Creating new session");
+		if (sessionId && transports[sessionId]) {
+			console.log("  Using existing transport");
+			transport = transports[sessionId];
+		} else if (!sessionId && isInitializeRequest(req.body)) {
+			console.log("  Creating new session");
 
-      transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (sid) => {
-          transports[sid] = transport;
-          console.log(`  ✅ Session initialized: ${sid}`);
-        },
-      });
+			transport = new StreamableHTTPServerTransport({
+				sessionIdGenerator: () => randomUUID(),
+				onsessioninitialized: (sid) => {
+					transports[sid] = transport;
+					console.log(`  ✅ Session initialized: ${sid}`);
+				},
+			});
 
-      transport.onclose = () => {
-        if (transport.sessionId) {
-          console.log(`  ❌ Session closed: ${transport.sessionId}`);
-          delete transports[transport.sessionId];
-        }
-      };
+			transport.onclose = () => {
+				if (transport.sessionId) {
+					console.log(`  ❌ Session closed: ${transport.sessionId}`);
+					delete transports[transport.sessionId];
+				}
+			};
 
-      const server = createMcpServer();
-      await server.connect(transport);
-    } else {
-      console.log("  ❌ Invalid request");
-      return res.status(400).json({
-        jsonrpc: "2.0",
-        error: { code: -32600, message: "Invalid Request" },
-        id: null,
-      });
-    }
+			const server = createMcpServer();
+			await server.connect(transport);
+		} else {
+			console.log("  ❌ Invalid request");
+			return res.status(400).json({
+				jsonrpc: "2.0",
+				error: { code: -32600, message: "Invalid Request" },
+				id: null,
+			});
+		}
 
-    console.log("  Calling handleRequest...");
-    await transport.handleRequest(req, res, req.body);
-    console.log("  ✅ Request handled");
-  } catch (error) {
-    console.error("❌ Error handling POST:", error);
-    if (!res.headersSent) {
-      res.status(500).json({
-        jsonrpc: "2.0",
-        error: {
-          code: -32603,
-          message: "Internal server error",
-          data: error instanceof Error ? error.message : String(error),
-        },
-        id: null,
-      });
-    }
-  }
+		console.log("  Calling handleRequest...");
+		await transport.handleRequest(req, res, req.body);
+		console.log("  ✅ Request handled");
+	} catch (error) {
+		console.error("❌ Error handling POST:", error);
+		if (!res.headersSent) {
+			res.status(500).json({
+				jsonrpc: "2.0",
+				error: {
+					code: -32603,
+					message: "Internal server error",
+					data: error instanceof Error ? error.message : String(error),
+				},
+				id: null,
+			});
+		}
+	}
 });
 
 // Handle GET requests (for SSE streaming)
 app.get("/mcp", async (req, res) => {
-  try {
-    const sessionId = req.headers["mcp-session-id"] as string;
+	try {
+		const sessionId = req.headers["mcp-session-id"] as string;
 
-    console.log("📥 GET /mcp - Session:", sessionId);
+		console.log("📥 GET /mcp - Session:", sessionId);
 
-    const transport = transports[sessionId];
-    if (!transport) {
-      console.log("  ❌ Session not found");
-      return res.status(404).json({
-        jsonrpc: "2.0",
-        error: { code: -32001, message: "Session not found" },
-        id: null,
-      });
-    }
+		const transport = transports[sessionId];
+		if (!transport) {
+			console.log("  ❌ Session not found");
+			return res.status(404).json({
+				jsonrpc: "2.0",
+				error: { code: -32001, message: "Session not found" },
+				id: null,
+			});
+		}
 
-    await transport.handleRequest(req, res);
-  } catch (error) {
-    console.error("❌ Error handling GET:", error);
-    if (!res.headersSent) {
-      res.status(500).json({
-        jsonrpc: "2.0",
-        error: { code: -32603, message: "Internal server error" },
-        id: null,
-      });
-    }
-  }
+		await transport.handleRequest(req, res);
+	} catch (error) {
+		console.error("❌ Error handling GET:", error);
+		if (!res.headersSent) {
+			res.status(500).json({
+				jsonrpc: "2.0",
+				error: { code: -32603, message: "Internal server error" },
+				id: null,
+			});
+		}
+	}
 });
 
 // Handle DELETE requests (close session)
 app.delete("/mcp", async (req, res) => {
-  try {
-    const sessionId = req.headers["mcp-session-id"] as string;
+	try {
+		const sessionId = req.headers["mcp-session-id"] as string;
 
-    console.log("🗑️  DELETE /mcp - Session:", sessionId);
+		console.log("🗑️  DELETE /mcp - Session:", sessionId);
 
-    const transport = transports[sessionId];
-    if (!transport) {
-      return res.status(404).json({
-        jsonrpc: "2.0",
-        error: { code: -32001, message: "Session not found" },
-        id: null,
-      });
-    }
+		const transport = transports[sessionId];
+		if (!transport) {
+			return res.status(404).json({
+				jsonrpc: "2.0",
+				error: { code: -32001, message: "Session not found" },
+				id: null,
+			});
+		}
 
-    await transport.handleRequest(req, res);
-    delete transports[sessionId];
-  } catch (error) {
-    console.error("❌ Error handling DELETE:", error);
-    if (!res.headersSent) {
-      res.status(500).json({
-        jsonrpc: "2.0",
-        error: { code: -32603, message: "Internal server error" },
-        id: null,
-      });
-    }
-  }
+		await transport.handleRequest(req, res);
+		delete transports[sessionId];
+	} catch (error) {
+		console.error("❌ Error handling DELETE:", error);
+		if (!res.headersSent) {
+			res.status(500).json({
+				jsonrpc: "2.0",
+				error: { code: -32603, message: "Internal server error" },
+				id: null,
+			});
+		}
+	}
 });
 
 app.listen(port, () => {
-  console.log(`🚀 MCP Todo Server with Interactive UI`);
-  console.log(`📡 Listening at: http://localhost:${port}/mcp`);
-  console.log(`\n📚 Available Tools:`);
-  console.log(`   - todo_create: Create a new todo with interactive UI`);
-  console.log(`   - todo_list: Display all todos with interactive UI`);
-  console.log(`   - todo_update: Update todo text or completion status`);
-  console.log(`   - todo_delete: Delete a todo item`);
-  console.log(`\n✨ All buttons in UI communicate via postMessage!`);
+	console.log(`🚀 MCP Todo Server with Interactive UI`);
+	console.log(`📡 Listening at: http://localhost:${port}/mcp`);
+	console.log(`\n📚 Available Tools:`);
+	console.log(`   - todo_create: Create a new todo with interactive UI`);
+	console.log(`   - todo_list: Display all todos with interactive UI`);
+	console.log(`   - todo_update: Update todo text or completion status`);
+	console.log(`   - todo_delete: Delete a todo item`);
+	console.log(`\n✨ All buttons in UI communicate via postMessage!`);
 });

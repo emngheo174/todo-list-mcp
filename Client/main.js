@@ -93,22 +93,10 @@ window.createTodo = async function () {
   }
 };
 
-// Toggle todo
-window.toggleTodo = async function (id, completed) {
-  const result = await callTool("todo_update", { id, completed });
-
-  if (result.success) {
-    await loadTodos();
-  } else {
-    alert("Failed to update todo: " + result.message);
-  }
-};
-
 // Save edit
 window.saveEdit = async function (id, newText) {
   const input = document.getElementById(`edit-input-${id}`);
-  console.log(input);
-  
+
   const text = newText.trim();
 
   if (!text) {
@@ -116,8 +104,8 @@ window.saveEdit = async function (id, newText) {
     return;
   }
 
-    await callTool("todo_update", { id, text });
-    await loadTodos();
+  await callTool("todo_update", { id, text });
+  await loadTodos();
 };
 
 // Delete todo
@@ -126,8 +114,8 @@ window.deleteTodo = async function (id) {
     return;
   }
 
-    await callTool("todo_delete", { id: id });
-    await loadTodos();
+  await callTool("todo_delete", { id: id });
+  await loadTodos();
 };
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -145,7 +133,6 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      console.log(message);
       switch (message.payload.toolName) {
         case "todo_delete":
           deleteTodo(message.payload.id);
